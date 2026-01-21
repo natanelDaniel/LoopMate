@@ -18,23 +18,31 @@ def get_random_color():
     colors = ["#3498db", "#e74c3c", "#2ecc71", "#f1c40f", "#9b59b6", "#1abc9c", "#e67e22"]
     return random.choice(colors)
 
-# --- סרגל צד להוספה ---
+# --- סרגל צד להוספה עם סדר שדות חדש ---
 with st.sidebar:
     st.header("➕ Add New Loop")
     with st.form("add_form", clear_on_submit=True):
+        # 1. שם
         name = st.text_input("Name")
-        # בבחירת תאריך, לוח השנה של המערכת בדרך כלל עוקב אחרי הגדרות הדפדפן
+        
+        # 2. מספר טלפון
+        phone = st.text_input("WhatsApp (e.g. 0501234567)")
+        
+        # 3. תאריך
         date = st.date_input("Start Date")
+        
+        # 4. שאר השדות
         duration = st.number_input("Duration (Days)", min_value=1, max_value=10, value=3)
         size = st.number_input("Group Size", min_value=1, value=1)
-        phone = st.text_input("WhatsApp (e.g. 0501234567)")
         delete_code = st.text_input("Personal Delete Code", type="password")
         notes = st.text_area("Notes")
         
         if st.form_submit_button("Post Loop"):
             if name and phone and delete_code:
+                # ניקוי והכנת מספר הטלפון
                 clean_phone = phone.replace("-", "").replace(" ", "")
-                if clean_phone.startswith("0"): clean_phone = "972" + clean_phone[1:]
+                if clean_phone.startswith("0"): 
+                    clean_phone = "972" + clean_phone[1:]
                 
                 data = {
                     "name": name, 
@@ -46,10 +54,15 @@ with st.sidebar:
                     "delete_code": delete_code,
                     "notes": notes
                 }
-                supabase.table("loops").insert(data).execute()
-                st.success("Posted!")
-                st.rerun()
-
+                
+                try:
+                    supabase.table("loops").insert(data).execute()
+                    st.success("Posted successfully!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error: {e}")
+            else:
+                st.error("Please fill in Name, Phone, and Delete Code")
 # --- הכנת הנתונים ללוח השנה ---
 res = supabase.table("loops").select("*").execute()
 db_events = res.data
