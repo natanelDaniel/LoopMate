@@ -35,7 +35,7 @@ with st.sidebar:
         
         if st.form_submit_button("פרסם לופ"):
             if name and phone and delete_code:
-                clean_phone = phone.replace("-", "").replace(" ", "")
+                clean_phone = phone.replace("-", "").replace(" ", "").replace("+", "")
                 if clean_phone.startswith("0"): clean_phone = "972" + clean_phone[1:]
                 
                 data = {
@@ -61,55 +61,56 @@ for ev in db_events:
     start = datetime.strptime(ev['start_date'], "%Y-%m-%d")
     end = start + timedelta(days=ev['duration_days'])
     
-    # סידור הטקסט עם תמיכה בעברית (RTL) - שם, אז משתתפים, אז טלפון
-    display_title = f"{ev['phone']} - {ev['group_size']} איש - {ev['name']}"
+    # סידור הטקסט: שם - אנשים - טלפון (מתאים ל-RTL)
+    display_title = f"{ev['name']} - {ev['group_size']} איש - {ev['phone']}"
     
     calendar_events.append({
         "title": display_title,
         "start": ev['start_date'],
         "end": end.strftime("%Y-%m-%d"),
         "backgroundColor": get_color_by_name(ev['name']),
-        "url": ev['whatsapp_link'], # הופך את כל האירוע ללחיץ ישירות לוואטסאפ
+        "borderColor": get_color_by_name(ev['name']),
+        "url": ev['whatsapp_link'],
         "resource": ev
     })
 
 # --- הגדרות לוח שנה ---
 calendar_options = {
     "initialView": "dayGridMonth",
-    "direction": "rtl",          # מעביר את כל הלוח למצב ימין לשמאל
-    "firstDay": 0,               # יום ראשון בתחילת שבוע
+    "direction": "rtl",
+    "firstDay": 0,
     "headerToolbar": {
         "left": "prev,next today",
         "center": "title",
         "right": "dayGridMonth,dayGridWeek"
-    }
+    },
+    # הפתרון לבעיית ה-Refused to connect: פתיחת הקישור בחלון חדש
+    "eventClick": "function(info) { info.jsEvent.preventDefault(); if (info.event.url) { window.open(info.event.url, '_blank'); } }"
 }
 
 st.title("🇻🇳 Vietnam Loop Finder")
+st.info("💡 טיפ: לחיצה על לופ תפתח מיד שיחת וואטסאפ עם המפרסם")
 
 # תצוגת לוח השנה
 state = calendar(events=calendar_events, options=calendar_options, key="loop_calendar")
 
-# --- אזור מחיקה (למטה) ---
+# --- אזור מחיקה ---
 st.divider()
-st.subheader("🗑️ מחיקת לופ קיים")
-with st.expander("לחץ כאן כדי למחוק את הפרסום שלך"):
+with st.expander("🗑️ למחיקת הפרסום שלך"):
     col1, col2, col3 = st.columns([2,2,1])
     with col1:
-        # יצירת רשימת שמות למחיקה
         names = [ev['name'] for ev in db_events]
-        name_to_del = st.selectbox("בחר שם למחיקה", names)
+        name_to_del = st.selectbox("בחר שם", names)
     with col2:
-        del_code = st.text_input("הכנס קוד אישי", type="password")
+        del_code = st.text_input("קוד אישי", type="password", key="del_pwd")
     with col3:
-        st.write(" ") # מרווח
-        if st.button("מחק"):
-            # מוצא את האירוע המתאים
+        st.write(" ")
+        if st.button("מחק לצמיתות"):
             target = next((item for item in db_events if item["name"] == name_to_del), None)
             if target and del_code == target['delete_code']:
                 supabase.table("loops").delete().eq("id", target['id']).execute()
                 st.cache_data.clear()
-                st.success("נמחק!")
+                st.success("הפרסום נמחק")
                 st.rerun()
             else:
                 st.error("קוד שגוי")
