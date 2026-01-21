@@ -10,14 +10,14 @@ supabase = create_client(URL, KEY)
 
 st.set_page_config(page_title="Vietnam Loop Calendar", page_icon="📅", layout="wide")
 
-# --- תיקון CSS: שינוי הסמן ליד (Pointer) ועיצוב כללי ---
+# --- תיקון סמן העכבר ליד לחיצה ---
 st.markdown("""
     <style>
     .fc-event {
         cursor: pointer !important;
     }
     </style>
-    """, unsafe_allow_html=True) # תוקן מ-unsafe_allow_name ל-unsafe_allow_html
+    """, unsafe_allow_html=True)
 
 @st.cache_data(ttl=60)
 def get_loop_data():
@@ -28,7 +28,7 @@ def get_color_by_name(name):
     colors = ["#3498db", "#e74c3c", "#2ecc71", "#f1c40f", "#9b59b6", "#1abc9c", "#e67e22"]
     return colors[hash(name) % len(colors)]
 
-# --- סרגל צד להוספה ---
+# --- סרגל צד: הוספת לופ ---
 with st.sidebar:
     st.header("➕ הוספת לופ חדש")
     with st.form("add_form", clear_on_submit=True):
@@ -54,14 +54,14 @@ with st.sidebar:
                 st.success("הלופ פורסם!")
                 st.rerun()
 
-# --- הכנת הנתונים ללוח ---
+# --- הכנת הנתונים ללוח השנה ---
 db_events = get_loop_data()
 calendar_events = []
 for ev in db_events:
     start = datetime.strptime(ev['start_date'], "%Y-%m-%d")
     end = start + timedelta(days=ev['duration_days'])
     
-    # סידור טקסט RTL
+    # כותרת: שם - איש - טלפון
     display_title = f"{ev['name']} - {ev['group_size']} איש - {ev['phone']}"
     
     calendar_events.append({
@@ -81,23 +81,18 @@ calendar_options = {
 }
 
 st.title("🇻🇳 Vietnam Loop Finder")
+
+# הצגת הלוח
 state = calendar(events=calendar_events, options=calendar_options, key="loop_calendar")
 
-# --- פתיחת וואטסאפ בטאב חדש ללא חסימה ---
+# --- פתיחת וואטסאפ בטאב חדש ---
 if state.get("eventClick"):
     wa_url = state["eventClick"]["event"]["extendedProps"]["wa_url"]
-    
-    # שימוש בקישור HTML שקופץ אוטומטית
     st.components.v1.html(
-        f"""
-        <script>
-            window.open('{wa_url}', '_blank');
-        </script>
-        """,
+        f"<script>window.open('{wa_url}', '_blank');</script>",
         height=0,
     )
-    # הודעת עזר למקרה שהדפדפן חוסם פופ-אפים
-    st.info(f"אם הוואטסאפ לא נפתח אוטומטית, [לחצו כאן]({wa_url})")
+    st.info(f"אם הוואטסאפ לא נפתח, [לחצו כאן לעבור לצ'אט]({wa_url})")
 
 # --- אזור מחיקה ---
 st.divider()
