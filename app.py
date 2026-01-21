@@ -10,33 +10,30 @@ supabase = create_client(URL, KEY)
 
 st.set_page_config(page_title="Vietnam Loop Calendar", page_icon="📅", layout="wide")
 
-st.title("📅 Vietnam Loop Finder")
-
-# פונקציה לשליפת נתונים עם Cache - מונעת ריצה מיותרת מול ה-DB בכל קליק
-@st.cache_data(ttl=60) # מתרענן אוטומטית כל דקה או כשקוראים ל-clear_cache
+# פונקציה לשליפת נתונים עם Cache
+@st.cache_data(ttl=60)
 def get_loop_data():
     res = supabase.table("loops").select("*").execute()
     return res.data
 
-# פונקציה לקביעת צבע קבוע לפי שם (כך שהצבע לא ישתנה בכל ריפרש)
+# פונקציה לקביעת צבע קבוע לפי שם
 def get_color_by_name(name):
     colors = ["#3498db", "#e74c3c", "#2ecc71", "#f1c40f", "#9b59b6", "#1abc9c", "#e67e22"]
-    # משתמש בערך ה-Hash של השם כדי לבחור צבע קבוע לאותו אדם
     return colors[hash(name) % len(colors)]
 
 # --- סרגל צד להוספה ---
 with st.sidebar:
-    st.header("➕ Add New Loop")
+    st.header("➕ הוספת לופ חדש")
     with st.form("add_form", clear_on_submit=True):
-        name = st.text_input("Name")
-        phone = st.text_input("Phone number (e.g. 0501234567)")
-        date = st.date_input("Start Date")
-        duration = st.number_input("Duration (Days)", min_value=1, max_value=10, value=3)
-        size = st.number_input("Group Size", min_value=1, value=1)
-        delete_code = st.text_input("Personal Delete Code", type="password")
-        notes = st.text_area("Notes")
+        name = st.text_input("שם")
+        phone = st.text_input("מספר טלפון (למשל 0501234567)")
+        date = st.date_input("תאריך יציאה")
+        duration = st.number_input("כמה ימים הלופ?", min_value=1, max_value=10, value=3)
+        size = st.number_input("כמה אנשים אתם?", min_value=1, value=1)
+        delete_code = st.text_input("קוד אישי למחיקה", type="password")
+        notes = st.text_area("הערות נוספות")
         
-        if st.form_submit_button("Post Loop"):
+        if st.form_submit_button("פרסם לופ"):
             if name and phone and delete_code:
                 clean_phone = phone.replace("-", "").replace(" ", "")
                 if clean_phone.startswith("0"): clean_phone = "972" + clean_phone[1:]
@@ -51,16 +48,10 @@ with st.sidebar:
                     "delete_code": delete_code,
                     "notes": notes
                 }
-                
-                try:
-                    supabase.table("loops").insert(data).execute()
-                    st.cache_data.clear() # מנקה את הקאש כדי שהנתון החדש יופיע מיד
-                    st.success("Posted successfully!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error: {e}")
-            else:
-                st.error("Please fill in Name, Phone, and Delete Code")
+                supabase.table("loops").insert(data).execute()
+                st.cache_data.clear()
+                st.success("הלופ פורסם!")
+                st.rerun()
 
 # --- הכנת הנתונים ללוח השנה ---
 db_events = get_loop_data()
@@ -69,52 +60,56 @@ calendar_events = []
 for ev in db_events:
     start = datetime.strptime(ev['start_date'], "%Y-%m-%d")
     end = start + timedelta(days=ev['duration_days'])
-    display_title = f"{ev['name']} - {ev['group_size']} ppl - {ev['phone']}"
+    
+    # סידור הטקסט עם תמיכה בעברית (RTL) - שם, אז משתתפים, אז טלפון
+    display_title = f"{ev['phone']} - {ev['group_size']} איש - {ev['name']}"
     
     calendar_events.append({
         "title": display_title,
         "start": ev['start_date'],
         "end": end.strftime("%Y-%m-%d"),
-        "backgroundColor": get_color_by_name(ev['name']), # צבע קבוע לפי שם
-        "borderColor": get_color_by_name(ev['name']),
+        "backgroundColor": get_color_by_name(ev['name']),
+        "url": ev['whatsapp_link'], # הופך את כל האירוע ללחיץ ישירות לוואטסאפ
         "resource": ev
     })
 
 # --- הגדרות לוח שנה ---
 calendar_options = {
     "initialView": "dayGridMonth",
-    "direction": "ltr",
-    "firstDay": 0,
+    "direction": "rtl",          # מעביר את כל הלוח למצב ימין לשמאל
+    "firstDay": 0,               # יום ראשון בתחילת שבוע
     "headerToolbar": {
         "left": "prev,next today",
         "center": "title",
         "right": "dayGridMonth,dayGridWeek"
-    },
-    "navLinks": True,
+    }
 }
 
-# שימוש ב-Key קבוע ללוח השנה מונע ממנו להיבנות מחדש בכל אינטראקציה
+st.title("🇻🇳 Vietnam Loop Finder")
+
+# תצוגת לוח השנה
 state = calendar(events=calendar_events, options=calendar_options, key="loop_calendar")
 
-# --- הצגת פרטים ומחיקה ---
-if state.get("eventClick"):
-    ev_data = state["eventClick"]["event"]["extendedProps"]["resource"]
-    st.divider()
-    col1, col2 = st.columns(2)
+# --- אזור מחיקה (למטה) ---
+st.divider()
+st.subheader("🗑️ מחיקת לופ קיים")
+with st.expander("לחץ כאן כדי למחוק את הפרסום שלך"):
+    col1, col2, col3 = st.columns([2,2,1])
     with col1:
-        st.subheader(f"Details: {ev_data['name']}")
-        st.write(f"👥 Group Size: {ev_data['group_size']}")
-        st.write(f"📞 Phone: {ev_data['phone']}")
-        if ev_data['notes']: st.info(f"📝 Notes: {ev_data['notes']}")
-        st.link_button("Chat on WhatsApp 💬", ev_data['whatsapp_link'])
+        # יצירת רשימת שמות למחיקה
+        names = [ev['name'] for ev in db_events]
+        name_to_del = st.selectbox("בחר שם למחיקה", names)
     with col2:
-        st.subheader("🗑️ Delete My Entry")
-        input_code = st.text_input("Enter delete code", type="password", key="del_key")
-        if st.button("Delete Permanently"):
-            if input_code == ev_data['delete_code']:
-                supabase.table("loops").delete().eq("id", ev_data['id']).execute()
-                st.cache_data.clear() # מנקה קאש אחרי מחיקה
-                st.success("Deleted!")
+        del_code = st.text_input("הכנס קוד אישי", type="password")
+    with col3:
+        st.write(" ") # מרווח
+        if st.button("מחק"):
+            # מוצא את האירוע המתאים
+            target = next((item for item in db_events if item["name"] == name_to_del), None)
+            if target and del_code == target['delete_code']:
+                supabase.table("loops").delete().eq("id", target['id']).execute()
+                st.cache_data.clear()
+                st.success("נמחק!")
                 st.rerun()
             else:
-                st.error("Incorrect code")
+                st.error("קוד שגוי")
