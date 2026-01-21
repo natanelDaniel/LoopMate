@@ -61,7 +61,7 @@ for ev in db_events:
     start = datetime.strptime(ev['start_date'], "%Y-%m-%d")
     end = start + timedelta(days=ev['duration_days'])
     
-    # סידור הטקסט: שם - אנשים - טלפון (מתאים ל-RTL)
+    # שינוי פורמט הכותרת לפי בקשתך
     display_title = f"{ev['name']} - {ev['group_size']} איש - {ev['phone']}"
     
     calendar_events.append({
@@ -70,8 +70,8 @@ for ev in db_events:
         "end": end.strftime("%Y-%m-%d"),
         "backgroundColor": get_color_by_name(ev['name']),
         "borderColor": get_color_by_name(ev['name']),
-        "url": ev['whatsapp_link'],
-        "resource": ev
+        # הסרנו את ה-URL מכאן כדי למנוע את השגיאה שראית בתמונה
+        "extendedProps": {"wa_url": ev['whatsapp_link']}
     })
 
 # --- הגדרות לוח שנה ---
@@ -83,16 +83,29 @@ calendar_options = {
         "left": "prev,next today",
         "center": "title",
         "right": "dayGridMonth,dayGridWeek"
-    },
-    # הפתרון לבעיית ה-Refused to connect: פתיחת הקישור בחלון חדש
-    "eventClick": "function(info) { info.jsEvent.preventDefault(); if (info.event.url) { window.open(info.event.url, '_blank'); } }"
+    }
 }
 
 st.title("🇻🇳 Vietnam Loop Finder")
-st.info("💡 טיפ: לחיצה על לופ תפתח מיד שיחת וואטסאפ עם המפרסם")
+st.info("💡 לחיצה על לופ תפתח מיד את הוואטסאפ של המפרסם בחלון חדש")
 
-# תצוגת לוח השנה
+# תצוגת לוח השנה - שימוש ב-Key קבוע
 state = calendar(events=calendar_events, options=calendar_options, key="loop_calendar")
+
+# --- הפתרון ללחיצה: פתיחת חלון חדש דרך פייתון ---
+if state.get("eventClick"):
+    # שליפת הלינק מתוך ה-Extended Props ששמרנו
+    wa_url = state["eventClick"]["event"]["extendedProps"]["wa_url"]
+    
+    # הזרקת קוד JS קטן שפותח טאב חדש באמת
+    st.components.v1.html(
+        f"""
+        <script>
+            window.open('{wa_url}', '_blank');
+        </script>
+        """,
+        height=0,
+    )
 
 # --- אזור מחיקה ---
 st.divider()
