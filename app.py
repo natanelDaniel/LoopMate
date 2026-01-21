@@ -8,7 +8,7 @@ URL = st.secrets["SUPABASE_URL"]
 KEY = st.secrets["SUPABASE_KEY"]
 supabase = create_client(URL, KEY)
 
-st.set_page_config(page_title="Vietnam Loop Calendar", page_icon="📅", layout="wide")
+st.set_page_config(page_title="LoopMate", page_icon="📅", layout="wide")
 
 # --- תיקון סמן העכבר ליד לחיצה ---
 st.markdown("""
@@ -80,7 +80,7 @@ calendar_options = {
     "headerToolbar": {"left": "prev,next today", "center": "title", "right": "dayGridMonth,dayGridWeek"}
 }
 
-st.title("🇻🇳 Vietnam Loop Finder")
+st.title("LoopMate - מציאת שותפים ללופ")
 
 # הצגת הלוח
 state = calendar(events=calendar_events, options=calendar_options, key="loop_calendar")
