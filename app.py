@@ -29,7 +29,7 @@ with st.sidebar:
         phone = st.text_input("WhatsApp (e.g. 0501234567)")
         
         # 3. תאריך
-        date = st.date_input("Start Date")
+        date = st.date_input("Start Date", format="DD/MM/YYYY")
         
         # 4. שאר השדות
         duration = st.number_input("Duration (Days)", min_value=1, max_value=10, value=3)
