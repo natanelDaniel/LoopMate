@@ -10,14 +10,14 @@ supabase = create_client(URL, KEY)
 
 st.set_page_config(page_title="Vietnam Loop Calendar", page_icon="📅", layout="wide")
 
-# --- עיצוב CSS לשינוי הסמן לעכבר לחיץ (Pointer) ---
+# --- תיקון CSS: שינוי הסמן ליד (Pointer) ועיצוב כללי ---
 st.markdown("""
     <style>
     .fc-event {
         cursor: pointer !important;
     }
     </style>
-    """, unsafe_allow_name=True)
+    """, unsafe_allow_html=True) # תוקן מ-unsafe_allow_name ל-unsafe_allow_html
 
 @st.cache_data(ttl=60)
 def get_loop_data():
@@ -28,7 +28,7 @@ def get_color_by_name(name):
     colors = ["#3498db", "#e74c3c", "#2ecc71", "#f1c40f", "#9b59b6", "#1abc9c", "#e67e22"]
     return colors[hash(name) % len(colors)]
 
-# --- סרגל צד ---
+# --- סרגל צד להוספה ---
 with st.sidebar:
     st.header("➕ הוספת לופ חדש")
     with st.form("add_form", clear_on_submit=True):
@@ -54,17 +54,22 @@ with st.sidebar:
                 st.success("הלופ פורסם!")
                 st.rerun()
 
-# --- הכנת הנתונים ---
+# --- הכנת הנתונים ללוח ---
 db_events = get_loop_data()
 calendar_events = []
 for ev in db_events:
     start = datetime.strptime(ev['start_date'], "%Y-%m-%d")
     end = start + timedelta(days=ev['duration_days'])
+    
+    # סידור טקסט RTL
+    display_title = f"{ev['name']} - {ev['group_size']} איש - {ev['phone']}"
+    
     calendar_events.append({
-        "title": f"{ev['name']} - {ev['group_size']} איש - {ev['phone']}",
+        "title": display_title,
         "start": ev['start_date'],
         "end": end.strftime("%Y-%m-%d"),
         "backgroundColor": get_color_by_name(ev['name']),
+        "borderColor": get_color_by_name(ev['name']),
         "extendedProps": {"wa_url": ev['whatsapp_link']}
     })
 
@@ -78,19 +83,21 @@ calendar_options = {
 st.title("🇻🇳 Vietnam Loop Finder")
 state = calendar(events=calendar_events, options=calendar_options, key="loop_calendar")
 
-# --- תיקון לחיצה חוזרת ---
+# --- פתיחת וואטסאפ בטאב חדש ללא חסימה ---
 if state.get("eventClick"):
     wa_url = state["eventClick"]["event"]["extendedProps"]["wa_url"]
     
-    # פתיחת הקישור
+    # שימוש בקישור HTML שקופץ אוטומטית
     st.components.v1.html(
-        f"<html><script>window.open('{wa_url}', '_blank');</script></html>",
+        f"""
+        <script>
+            window.open('{wa_url}', '_blank');
+        </script>
+        """,
         height=0,
     )
-    
-    # טריק קטן: כפתור נסתר או אלמנט שגורם ל-Rerun קל כדי לאפס את מצב הלחיצה
-    if st.button("לחצו כאן אם הוואטסאפ לא נפתח או כדי לשחרר את הנעילה"):
-        st.rerun()
+    # הודעת עזר למקרה שהדפדפן חוסם פופ-אפים
+    st.info(f"אם הוואטסאפ לא נפתח אוטומטית, [לחצו כאן]({wa_url})")
 
 # --- אזור מחיקה ---
 st.divider()
