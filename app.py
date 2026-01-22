@@ -10,84 +10,80 @@ supabase = create_client(URL, KEY)
 
 st.set_page_config(page_title="LoopMate Vietnam", page_icon="🏍️", layout="wide")
 
-# --- עיצוב CSS "סקסי" ומתקדם ללוח השנה ---
+# --- עיצוב CSS סקסי (שקיפות וניאון) ---
 st.markdown("""
     <style>
-    /* רקע האפליקציה */
+    /* רקע האפליקציה הכללי */
     .stApp {
         background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
         color: #ffffff;
     }
     
-    /* עיצוב לוח השנה - אפקט זכוכית */
+    /* הפיכת הלוח לשקוף ומעוצב */
     .fc {
-        background: rgba(255, 255, 255, 0.03) !important;
-        backdrop-filter: blur(15px);
-        border-radius: 20px !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        padding: 20px;
+        background: transparent !important; /* ביטול הרקע השחור */
+        border: none !important;
         color: white !important;
     }
 
-    /* כותרות ימי השבוע */
-    .fc-col-header-cell {
-        background: rgba(255, 255, 255, 0.05);
-        padding: 10px 0 !important;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-size: 0.9rem;
-    }
-
-    /* עיצוב הריבועים של הימים */
+    /* עיצוב התאים (הריבועים) של הלוח */
     .fc-daygrid-day {
+        background: rgba(255, 255, 255, 0.03) !important;
         border: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
-    
-    .fc-day-today {
-        background: rgba(0, 210, 255, 0.1) !important;
+
+    /* כותרות ימי השבוע */
+    .fc-col-header-cell-cushion {
+        color: #3498db !important;
+        font-weight: bold;
+        text-transform: uppercase;
     }
 
-    /* עיצוב האירועים (הלופים) */
+    /* מספרי הימים */
+    .fc-daygrid-day-number {
+        color: rgba(255, 255, 255, 0.6) !important;
+        padding: 5px !important;
+    }
+
+    /* הדגשת היום הנוכחי */
+    .fc-day-today {
+        background: rgba(52, 152, 219, 0.15) !important;
+    }
+
+    /* עיצוב הלופים (האירועים) */
     .fc-event {
+        border-radius: 10px !important;
         border: none !important;
-        border-radius: 6px !important;
-        padding: 4px 10px !important;
-        margin: 2px !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2) !important;
-        font-weight: 600 !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+        padding: 5px !important;
+        cursor: pointer !important;
         transition: transform 0.2s ease !important;
     }
     
     .fc-event:hover {
-        transform: translateY(-2px) scale(1.02) !important;
-        filter: brightness(1.2);
+        transform: scale(1.05) !important;
+        z-index: 100 !important;
     }
 
-    /* עיצוב כפתורי השליטה בלוח (Next/Prev/Today) */
+    /* עיצוב כותרת החודש */
+    .fc-toolbar-title {
+        color: white !important;
+        font-size: 1.8rem !important;
+        font-weight: 800 !important;
+        text-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+    }
+
+    /* עיצוב כפתורי ניווט */
     .fc-button {
         background: rgba(255, 255, 255, 0.1) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         color: white !important;
-        border-radius: 8px !important;
-        text-transform: capitalize !important;
+        border-radius: 30px !important;
     }
-    
+
     .fc-button-active {
         background: #3498db !important;
-        border-color: #3498db !important;
     }
-
-    /* כותרת החודש */
-    .fc-toolbar-title {
-        font-weight: 800 !important;
-        letter-spacing: -1px;
-        background: -webkit-linear-gradient(#fff, #3a7bd5);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    /* הסתרת כפתור ה-Rerun הסטנדרטי של Streamlit שקופץ מעל הלוח */
-    .stDeployButton { display:none; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -100,52 +96,47 @@ def get_loop_data():
     return res.data
 
 def get_color_by_name(name):
-    # פלטת צבעים מודרנית ורכה יותר
-    colors = ["#4facfe", "#43e97b", "#fa709a", "#fee140", "#667eea", "#f093fb"]
+    # צבעים תוססים יותר
+    colors = ["#00d2ff", "#92fe9d", "#ff758c", "#ff7eb3", "#8E2DE2", "#f9d423"]
     return colors[hash(name) % len(colors)]
 
-st.markdown("<h1>LoopMate Vietnam 🇻🇳</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: white;'>LoopMate Vietnam 🇻🇳</h1>", unsafe_allow_html=True)
 
 if st.session_state.show_form:
+    # (הקוד של הטופס נשאר אותו דבר כמו קודם)
     st.markdown("<h2 style='text-align: center;'>🏍️ Create Your Loop</h2>", unsafe_allow_html=True)
-    
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
         if st.button("⬅️ Back to Calendar"):
             st.session_state.show_form = False
             st.rerun()
-
         with st.form("sexy_form", clear_on_submit=True):
             f_col1, f_col2 = st.columns(2)
             with f_col1:
-                name = st.text_input("Name / Nickname")
-                phone = st.text_input("WhatsApp (972...)")
+                name = st.text_input("Name")
+                phone = st.text_input("Phone Number")
                 date = st.date_input("Start Date")
             with f_col2:
-                duration = st.number_input("Duration (Days)", min_value=1, value=3)
+                duration = st.number_input("Days", min_value=1, value=3)
                 size = st.number_input("Group Size", min_value=1, value=1)
-                delete_code = st.text_input("Delete Code", type="password")
-            
-            notes = st.text_area("Anything else? (Drivers only, Chill, etc.)")
-            
+                delete_code = st.text_input("Code", type="password")
+            notes = st.text_area("Notes")
             if st.form_submit_button("LFG! 🚀"):
                 if name and phone and delete_code:
                     clean_phone = phone.replace("-", "").replace(" ", "").replace("+", "")
                     if clean_phone.startswith("0"): clean_phone = "972" + clean_phone[1:]
-                    data = {
-                        "name": name, "start_date": str(date), "duration_days": duration,
-                        "group_size": size, "phone": phone, "whatsapp_link": f"https://wa.me/{clean_phone}",
-                        "delete_code": delete_code, "notes": notes
-                    }
+                    data = {"name": name, "start_date": str(date), "duration_days": duration, "group_size": size, "phone": phone, "whatsapp_link": f"https://wa.me/{clean_phone}", "delete_code": delete_code, "notes": notes}
                     supabase.table("loops").insert(data).execute()
                     st.cache_data.clear()
                     st.session_state.show_form = False
                     st.rerun()
 else:
-    # כפתור הוספה מרכזי וסקסי
-    if st.button("➕ Add My Loop"):
-        st.session_state.show_form = True
-        st.rerun()
+    # כפתור הוספה
+    col1, col2, col3 = st.columns([1,1,1])
+    with col2:
+        if st.button("➕ Add My Loop"):
+            st.session_state.show_form = True
+            st.rerun()
 
     db_events = get_loop_data()
     calendar_events = []
@@ -160,11 +151,11 @@ else:
             "extendedProps": {"wa_url": ev['whatsapp_link']}
         })
 
+    # הגדרות לוח שנה - הוספנו תמיכה ב-LTR ושינוי יום התחלה לראשון
     calendar_options = {
         "initialView": "dayGridMonth",
         "direction": "ltr",
         "firstDay": 0,
-        "themeSystem": "standard",
         "headerToolbar": {"left": "prev,next today", "center": "title", "right": "dayGridMonth,dayGridWeek"}
     }
 
@@ -174,13 +165,13 @@ else:
         wa_url = state["eventClick"]["event"]["extendedProps"]["wa_url"]
         st.components.v1.html(f"<script>window.open('{wa_url}', '_blank');</script>", height=0)
 
-    # אזור מחיקה בעיצוב נקי
-    st.markdown("<br><br>", unsafe_allow_html=True)
+    # אזור מחיקה
+    st.markdown("<br>", unsafe_allow_html=True)
     with st.expander("🛠️ Manage My Posts"):
         m_col1, m_col2, m_col3 = st.columns([2,2,1])
         with m_col1:
             names = [ev['name'] for ev in db_events]
-            name_to_del = st.selectbox("Select Name", names)
+            name_to_del = st.selectbox("Select Name", names) if names else st.selectbox("Select Name", ["No loops found"])
         with m_col2:
             del_code = st.text_input("Enter Code", type="password", key="del_pwd")
         with m_col3:
