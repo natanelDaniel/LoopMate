@@ -8,13 +8,24 @@ URL = st.secrets["SUPABASE_URL"]
 KEY = st.secrets["SUPABASE_KEY"]
 supabase = create_client(URL, KEY)
 
-st.set_page_config(page_title="LoopMate", page_icon="📅", layout="wide")
+# הגדרת פריסה: כאן הוספתי את initial_sidebar_state="expanded" שגורם לו להיות פתוח תמיד
+st.set_page_config(
+    page_title="Vietnam Loop Calendar", 
+    page_icon="📅", 
+    layout="wide",
+    initial_sidebar_state="expanded" 
+)
 
-# --- תיקון סמן העכבר ליד לחיצה ---
+# --- עיצוב CSS ---
 st.markdown("""
     <style>
-    .fc-event {
-        cursor: pointer !important;
+    .fc-event { cursor: pointer !important; }
+    /* עיצוב כפתור ההוספה העליון */
+    div.stButton > button:first-child {
+        background-color: #3498db;
+        color: white;
+        border-radius: 10px;
+        padding: 10px 20px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -28,6 +39,13 @@ def get_color_by_name(name):
     colors = ["#3498db", "#e74c3c", "#2ecc71", "#f1c40f", "#9b59b6", "#1abc9c", "#e67e22"]
     return colors[hash(name) % len(colors)]
 
+# --- כותרת ראשית ---
+st.title("🇻🇳 Vietnam Loop Finder")
+
+# הוספת כפתור בולט בראש העמוד למקרה שהסרגל סגור
+if st.button("➕ לחצו כאן להוספת לופ חדש"):
+    st.info("מלאו את הפרטים בסרגל שנפתח בצד שמאל ⬅️")
+
 # --- סרגל צד: הוספת לופ ---
 with st.sidebar:
     st.header("➕ הוספת לופ חדש")
@@ -40,7 +58,7 @@ with st.sidebar:
         delete_code = st.text_input("קוד אישי למחיקה", type="password")
         notes = st.text_area("הערות נוספות")
         
-        if st.form_submit_button("פרסם לופ"):
+        if st.form_submit_button("פרסם לופ ✅"):
             if name and phone and delete_code:
                 clean_phone = phone.replace("-", "").replace(" ", "").replace("+", "")
                 if clean_phone.startswith("0"): clean_phone = "972" + clean_phone[1:]
@@ -60,10 +78,7 @@ calendar_events = []
 for ev in db_events:
     start = datetime.strptime(ev['start_date'], "%Y-%m-%d")
     end = start + timedelta(days=ev['duration_days'])
-    
-    # כותרת: שם - איש - טלפון
     display_title = f"{ev['name']} - {ev['group_size']} איש - {ev['phone']}"
-    
     calendar_events.append({
         "title": display_title,
         "start": ev['start_date'],
@@ -80,18 +95,13 @@ calendar_options = {
     "headerToolbar": {"left": "prev,next today", "center": "title", "right": "dayGridMonth,dayGridWeek"}
 }
 
-st.title("LoopMate - מציאת שותפים ללופ")
-
 # הצגת הלוח
 state = calendar(events=calendar_events, options=calendar_options, key="loop_calendar")
 
-# --- פתיחת וואטסאפ בטאב חדש ---
+# פתיחת וואטסאפ
 if state.get("eventClick"):
     wa_url = state["eventClick"]["event"]["extendedProps"]["wa_url"]
-    st.components.v1.html(
-        f"<script>window.open('{wa_url}', '_blank');</script>",
-        height=0,
-    )
+    st.components.v1.html(f"<script>window.open('{wa_url}', '_blank');</script>", height=0)
     st.info(f"אם הוואטסאפ לא נפתח, [לחצו כאן לעבור לצ'אט]({wa_url})")
 
 # --- אזור מחיקה ---
