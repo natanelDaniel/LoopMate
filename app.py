@@ -10,17 +10,19 @@ supabase = create_client(URL, KEY)
 
 st.set_page_config(page_title="LoopMate Vietnam", page_icon="🏍️", layout="wide")
 
+# --- פונקציית מונה כניסות אמיתי ---
 def update_and_get_visits():
     try:
-        # עדכון המונה ב-1 (שורת ה-SQL שרצה בשרת)
-        supabase.rpc('increment_visit_count').execute() # דורש פונקציית RPC ב-Supabase
-        # או בדרך פשוטה יותר ללא RPC:
+        # שליפת המונה הקיים מטבלת site_stats (ID 1)
         res = supabase.table("site_stats").select("visit_count").eq("id", 1).execute()
-        current_count = res.data[0]['visit_count']
-        new_count = current_count + 1
-        supabase.table("site_stats").update({"visit_count": new_count}).eq("id", 1).execute()
-        return new_count
-    except:
+        if res.data:
+            current_count = res.data[0]['visit_count']
+            new_count = current_count + 1
+            # עדכון המונה ב-Database
+            supabase.table("site_stats").update({"visit_count": new_count}).eq("id", 1).execute()
+            return new_count
+        return "---"
+    except Exception:
         return "---"
 
 # הרצת המונה פעם אחת בכל טעינה של האתר
@@ -28,7 +30,7 @@ if 'counted' not in st.session_state:
     st.session_state.visit_total = update_and_get_visits()
     st.session_state.counted = True
 
-# --- עיצוב CSS סקסי (ניקיון המונים ולוח השנה) ---
+# --- עיצוב CSS סקסי (כולל ה-Footer) ---
 st.markdown("""
     <style>
     /* רקע האפליקציה */
@@ -47,6 +49,18 @@ st.markdown("""
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         max-width: 300px;
         margin: 0 auto 30px auto;
+    }
+
+    /* עיצוב מונה כניסות בתחתית */
+    .footer-counter {
+        text-align: center;
+        font-size: 14px;
+        opacity: 0.6;
+        margin-top: 60px;
+        padding-bottom: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding-top: 20px;
+        font-family: sans-serif;
     }
 
     /* הפיכת לוח השנה לשקוף ומשתלב */
@@ -101,7 +115,6 @@ total_loops = len(db_events)
 # --- תצוגת כותרת ומונה מרכזי ---
 st.markdown("<h1 style='text-align: center; margin-bottom: 10px;'>LoopMate Vietnam 🇻🇳</h1>", unsafe_allow_html=True)
 
-# מונה לופים מרכזי בודד
 st.markdown(f"""
     <div class='total-counter'>
         <h2 style='margin:0; color:#00d2ff; font-size: 40px;'>{total_loops}</h2>
@@ -148,12 +161,10 @@ if st.session_state.show_form:
                 st.session_state.show_form = False
                 st.rerun()
 else:
-    # כפתור הוספה מרכזי
     if st.button("➕ הוסף את הלופ שלי"):
         st.session_state.show_form = True
         st.rerun()
 
-    # הכנת אירועים ללוח
     calendar_events = []
     for ev in db_events:
         start = datetime.strptime(ev['start_date'], "%Y-%m-%d")
@@ -196,5 +207,6 @@ else:
                     supabase.table("loops").delete().eq("id", target['id']).execute()
                     st.cache_data.clear()
                     st.rerun()
+
 # --- הצגת מונה הכניסות בתחתית העמוד ---
 st.markdown(f"<div class='footer-counter'>סה\"כ כניסות לאתר: {st.session_state.visit_total}</div>", unsafe_allow_html=True)
