@@ -8,7 +8,7 @@ URL = st.secrets["SUPABASE_URL"]
 KEY = st.secrets["SUPABASE_KEY"]
 supabase = create_client(URL, KEY)
 
-# הגדרת פריסה: כאן הוספתי את initial_sidebar_state="expanded" שגורם לו להיות פתוח תמיד
+# הגדרת פריסה: initial_sidebar_state="expanded" גורם לו להיפתח אוטומטית בכניסה
 st.set_page_config(
     page_title="Vietnam Loop Calendar", 
     page_icon="📅", 
@@ -20,7 +20,6 @@ st.set_page_config(
 st.markdown("""
     <style>
     .fc-event { cursor: pointer !important; }
-    /* עיצוב כפתור ההוספה העליון */
     div.stButton > button:first-child {
         background-color: #3498db;
         color: white;
@@ -42,9 +41,10 @@ def get_color_by_name(name):
 # --- כותרת ראשית ---
 st.title("🇻🇳 Vietnam Loop Finder")
 
-# הוספת כפתור בולט בראש העמוד למקרה שהסרגל סגור
+# שיפור הכפתור: לחיצה עליו תבצע rerun ותוודא שה-initial_sidebar_state="expanded" מוחל
 if st.button("➕ לחצו כאן להוספת לופ חדש"):
     st.info("מלאו את הפרטים בסרגל שנפתח בצד שמאל ⬅️")
+    # אין צורך בקוד נוסף, ה-Rerun האוטומטי של הכפתור יחד עם ה-set_page_config יפתח אותו
 
 # --- סרגל צד: הוספת לופ ---
 with st.sidebar:
