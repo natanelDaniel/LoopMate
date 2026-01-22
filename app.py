@@ -10,71 +10,84 @@ supabase = create_client(URL, KEY)
 
 st.set_page_config(page_title="LoopMate Vietnam", page_icon="🏍️", layout="wide")
 
-# --- עיצוב CSS "סקסי" (מצב כהה, צבעי ניאון, ואפקטים) ---
+# --- עיצוב CSS "סקסי" ומתקדם ללוח השנה ---
 st.markdown("""
     <style>
-    /* רקע ועיצוב כללי */
+    /* רקע האפליקציה */
     .stApp {
         background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
         color: #ffffff;
     }
     
-    /* עיצוב כפתור הוספה ראשי */
-    div.stButton > button:first-child {
-        background: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
-        color: white;
-        border: none;
-        border-radius: 50px;
-        padding: 15px 30px;
-        font-size: 20px;
-        font-weight: bold;
-        transition: all 0.3s ease;
-        box-shadow: 0px 4px 15px rgba(0, 210, 255, 0.4);
-        width: auto;
-        display: block;
-        margin: 0 auto;
-    }
-    
-    div.stButton > button:hover {
-        transform: scale(1.05);
-        box-shadow: 0px 6px 20px rgba(0, 210, 255, 0.6);
-    }
-
-    /* עיצוב לוח השנה */
-    .fc { 
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 15px;
-        padding: 15px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .fc-event {
-        border-radius: 8px !important;
-        border: none !important;
-        padding: 3px 8px !important;
-        font-weight: 500 !important;
-        cursor: pointer !important;
-    }
-
-    /* עיצוב טפסים */
-    .stForm {
-        background: rgba(255, 255, 255, 0.07) !important;
+    /* עיצוב לוח השנה - אפקט זכוכית */
+    .fc {
+        background: rgba(255, 255, 255, 0.03) !important;
+        backdrop-filter: blur(15px);
         border-radius: 20px !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        padding: 30px !important;
+        padding: 20px;
+        color: white !important;
+    }
+
+    /* כותרות ימי השבוע */
+    .fc-col-header-cell {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 10px 0 !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+    }
+
+    /* עיצוב הריבועים של הימים */
+    .fc-daygrid-day {
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
     
-    /* כותרות */
-    h1 {
-        text-align: center;
+    .fc-day-today {
+        background: rgba(0, 210, 255, 0.1) !important;
+    }
+
+    /* עיצוב האירועים (הלופים) */
+    .fc-event {
+        border: none !important;
+        border-radius: 6px !important;
+        padding: 4px 10px !important;
+        margin: 2px !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2) !important;
+        font-weight: 600 !important;
+        transition: transform 0.2s ease !important;
+    }
+    
+    .fc-event:hover {
+        transform: translateY(-2px) scale(1.02) !important;
+        filter: brightness(1.2);
+    }
+
+    /* עיצוב כפתורי השליטה בלוח (Next/Prev/Today) */
+    .fc-button {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+        border-radius: 8px !important;
+        text-transform: capitalize !important;
+    }
+    
+    .fc-button-active {
+        background: #3498db !important;
+        border-color: #3498db !important;
+    }
+
+    /* כותרת החודש */
+    .fc-toolbar-title {
+        font-weight: 800 !important;
+        letter-spacing: -1px;
         background: -webkit-linear-gradient(#fff, #3a7bd5);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-size: 3.5rem !important;
-        font-weight: 800 !important;
-        margin-bottom: 2rem !important;
     }
+
+    /* הסתרת כפתור ה-Rerun הסטנדרטי של Streamlit שקופץ מעל הלוח */
+    .stDeployButton { display:none; }
     </style>
     """, unsafe_allow_html=True)
 
