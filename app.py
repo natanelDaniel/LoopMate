@@ -107,7 +107,7 @@ if st.session_state.show_form:
         c1, c2 = st.columns(2)
         with c1:
             name = st.text_input("שם / כינוי")
-            phone = st.text_input("וואטסאפ (למשל 0501234567)")
+            phone = st.text_input("מספר פלאפון (למשל 0501234567)")
             date = st.date_input("תאריך יציאה")
         with c2:
             duration = st.number_input("כמה ימים הלופ?", min_value=1, value=3)
