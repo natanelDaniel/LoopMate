@@ -10,6 +10,24 @@ supabase = create_client(URL, KEY)
 
 st.set_page_config(page_title="LoopMate Vietnam", page_icon="🏍️", layout="wide")
 
+def update_and_get_visits():
+    try:
+        # עדכון המונה ב-1 (שורת ה-SQL שרצה בשרת)
+        supabase.rpc('increment_visit_count').execute() # דורש פונקציית RPC ב-Supabase
+        # או בדרך פשוטה יותר ללא RPC:
+        res = supabase.table("site_stats").select("visit_count").eq("id", 1).execute()
+        current_count = res.data[0]['visit_count']
+        new_count = current_count + 1
+        supabase.table("site_stats").update({"visit_count": new_count}).eq("id", 1).execute()
+        return new_count
+    except:
+        return "---"
+
+# הרצת המונה פעם אחת בכל טעינה של האתר
+if 'counted' not in st.session_state:
+    st.session_state.visit_total = update_and_get_visits()
+    st.session_state.counted = True
+
 # --- עיצוב CSS סקסי (ניקיון המונים ולוח השנה) ---
 st.markdown("""
     <style>
@@ -178,3 +196,5 @@ else:
                     supabase.table("loops").delete().eq("id", target['id']).execute()
                     st.cache_data.clear()
                     st.rerun()
+# --- הצגת מונה הכניסות בתחתית העמוד ---
+st.markdown(f"<div class='footer-counter'>סה\"כ כניסות לאתר: {st.session_state.visit_total}</div>", unsafe_allow_html=True)
