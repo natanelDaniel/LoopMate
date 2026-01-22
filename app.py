@@ -113,7 +113,7 @@ db_events = get_loop_data()
 total_loops = len(db_events)
 
 # --- תצוגת כותרת ומונה מרכזי ---
-st.markdown("<h1 style='text-align: center; margin-bottom: 10px;'>LoopMate Vietnam 🇻🇳</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; margin-bottom: 10px;'>LoopMate Vietnam</h1>", unsafe_allow_html=True)
 
 st.markdown(f"""
     <div class='total-counter'>
