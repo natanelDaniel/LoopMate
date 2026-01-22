@@ -8,7 +8,7 @@ URL = st.secrets["SUPABASE_URL"]
 KEY = st.secrets["SUPABASE_KEY"]
 supabase = create_client(URL, KEY)
 
-# הגדרת פריסה: initial_sidebar_state="expanded" גורם לו להיפתח אוטומטית בכניסה
+# הגדרת פריסה בסיסית
 st.set_page_config(
     page_title="Vietnam Loop Calendar", 
     page_icon="📅", 
@@ -25,6 +25,7 @@ st.markdown("""
         color: white;
         border-radius: 10px;
         padding: 10px 20px;
+        font-weight: bold;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -39,12 +40,12 @@ def get_color_by_name(name):
     return colors[hash(name) % len(colors)]
 
 # --- כותרת ראשית ---
-st.title("🇻🇳 Vietnam Loop Finder")
+st.title("🇻🇳 LoopMate - מציאת שותפים ללופ")
 
-# שיפור הכפתור: לחיצה עליו תבצע rerun ותוודא שה-initial_sidebar_state="expanded" מוחל
+# פתרון הלחצן: שימוש ב-Query Parameter כדי לכפות רענון של הדף במצב Expanded
 if st.button("➕ לחצו כאן להוספת לופ חדש"):
-    st.info("מלאו את הפרטים בסרגל שנפתח בצד שמאל ⬅️")
-    # אין צורך בקוד נוסף, ה-Rerun האוטומטי של הכפתור יחד עם ה-set_page_config יפתח אותו
+    st.query_params["open_sidebar"] = "true"
+    st.rerun()
 
 # --- סרגל צד: הוספת לופ ---
 with st.sidebar:
@@ -78,7 +79,7 @@ calendar_events = []
 for ev in db_events:
     start = datetime.strptime(ev['start_date'], "%Y-%m-%d")
     end = start + timedelta(days=ev['duration_days'])
-    display_title = f"{ev['name']} - {ev['group_size']} איש - {ev['phone']}"
+    display_title = f"{ev['name']} - {ev['group_size']} ppl - {ev['phone']}"
     calendar_events.append({
         "title": display_title,
         "start": ev['start_date'],
